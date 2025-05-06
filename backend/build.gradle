@@ -1,0 +1,126 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.4.3'
+    id 'io.spring.dependency-management' version '1.1.7'
+    id 'jacoco'
+    id 'checkstyle'
+}
+
+group = 'com.hyrepo'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.5'
+    implementation 'org.springframework.boot:spring-boot-starter-logging'
+    implementation 'org.hibernate.orm:hibernate-community-dialects:6.4.3.Final'
+    implementation 'org.xerial:sqlite-jdbc:3.45.1.0'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
+    runtimeOnly 'com.h2database:h2'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.security:spring-security-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+test {
+    finalizedBy jacocoTestReport
+}
+
+jacocoTestReport {
+    dependsOn test
+
+    reports {
+        xml.required = false
+        csv.required = false
+        html.outputLocation = layout.buildDirectory.dir('jacocoHtml')
+    }
+}
+
+
+jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            excludes = ['com.hyrepo.comments_tree.config.**',
+                        'com.hyrepo.comments_tree.model.**',
+                        'com.hyrepo.comments_tree.exception.**',
+                        'com.hyrepo.comments_tree.repository.**',
+                        'com.hyrepo.comments_tree.CommentsTreeApplication**',
+                        'com.hyrepo.comments_tree.util.DateTimeUtil',
+                        'com.hyrepo.comments_tree.controller.TestController',
+                        'com.hyrepo.comments_tree.util.Constants'
+            ]
+
+            element = 'CLASS'
+
+            limit {
+                counter = 'INSTRUCTION'
+                value = 'COVEREDRATIO'
+                minimum = 1.0
+            }
+        }
+    }
+}
+
+check.dependsOn jacocoTestCoverageVerification
+
+checkstyle {
+    toolVersion = "10.17.0"
+    configFile = file("$rootDir/checkstyle.xml") // 指定 XML 规则文件
+    ignoreFailures = false
+    showViolations = true
+}
+
+tasks.withType(Checkstyle).configureEach {
+    reports {
+        xml.required = false
+        html.required = true
+        html.outputLocation = file("$buildDir/reports/checkstyle.html")
+    }
+}
+
+tasks.named("checkstyleTest").configure {
+    enabled = false
+}
+
+tasks.register('reportSummary') {
+    dependsOn 'build' // 让它在 build 之后执行
+    doLast {
+        def jacocoReport = file("$buildDir/jacocoHtml/index.html")
+        def checkstyleReport = file("$buildDir/reports/checkstyle.html")
+
+        println "\n=== 🎯 Reports Summary ==="
+        if (jacocoReport.exists()) {
+            println "📌 JaCoCo Coverage Report: file://${jacocoReport.absolutePath}"
+        }
+
+        if (checkstyleReport.exists()) {
+            println "📌 Checkstyle Report: file://${checkstyleReport.absolutePath}"
+        }
+        println "=========================\n"
+    }
+}
+
+// 让 reportSummary 任务在 build 之后执行
+tasks.named("build").configure {
+    finalizedBy("reportSummary")
+}

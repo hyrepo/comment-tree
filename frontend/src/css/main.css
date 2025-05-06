@@ -1,0 +1,43 @@
+
+/* Comments */
+.comment-item {
+  position: relative;
+}
+
+.comment-item .child-comments {
+  position: relative;
+}
+
+.avatar {
+  font-weight: bold;
+  width: 40px;
+  height: 40px;
+}
+
+textarea:focus {
+  box-shadow: none !important;
+}
+
+#comments-container {
+  max-height: 800px;
+  overflow-y: auto;
+}
+
+.user-logged-in.d-none {
+  display: none !important;
+}
+
+.fade-in {
+  animation: fadeIn 0.5s;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (max-width: 768px) {
+  .ms-4 {
+    margin-left: 1rem !important;
+  }
+}
